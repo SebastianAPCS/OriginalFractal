@@ -3,7 +3,7 @@
 *  4D Sierpinski Fractal
 */
 
-import processing.opengl.*;
+// import processing.opengl.*;
 // import java.util.Collections;
 
 // Necessary global instances and variables
@@ -19,7 +19,6 @@ float weight = 0.75;
 double s = 150;
 
 ArrayList<FiveCell> sierpinski = new ArrayList<>();
-// ArrayList<LineSegment> lineSegments = new ArrayList<LineSegment>();
 
 // Constants
 final double goldenRatio = 1.61803398875;
@@ -32,7 +31,7 @@ final Vertex vertex5 = new Vertex(goldenRatio * s, goldenRatio * s, goldenRatio 
 
 // Necessary processing functions
 void setup() {
-  size(800, 600, OPENGL);
+  size(800, 600);
   strokeWeight(weight);
   
   angles[0] = 0;

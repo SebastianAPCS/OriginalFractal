@@ -4,7 +4,7 @@
 */
 
 import processing.opengl.*;
-import java.util.Collections;
+// import java.util.Collections;
 
 // Necessary global instances and variables
 Matrix4 transform;
@@ -604,6 +604,7 @@ void showLines(float w, int r, int g, int b) {
 }
 
 // An attempt at only rendering the "front" lines, not really complete / working
+/*
 void drawLineSegment(LineSegment segment, float w, int r, int g, int b) {
   pushMatrix();
   strokeWeight(w);
@@ -668,6 +669,7 @@ double determineFrontThreshold(ArrayList<LineSegment> segments) {
     return (depths.get(middle-1) + depths.get(middle)) / 2.0;
   }
 }
+*/
 
 // Incomplete code
 /*

@@ -3,6 +3,9 @@
 *  4D Sierpinski Fractal
 */
 
+import processing.opengl.*;
+import java.util.Collections;
+
 // Necessary global instances and variables
 Matrix4 transform;
 float[] angles = new float[6];
@@ -12,19 +15,30 @@ int r;
 int g;
 int b;
 
-float weight = 0.25;
-double s = 100;
+float weight = 0.75;
+double s = 150;
+
+ArrayList<FiveCell> sierpinski = new ArrayList<>();
+ArrayList<LineSegment> lineSegments = new ArrayList<LineSegment>();
 
 // Constants
 final double goldenRatio = 1.61803398875;
 
+final Vertex vertex1 = new Vertex(2 * s, 0, 0, 0);
+final Vertex vertex2 = new Vertex(0, 2 * s, 0, 0);
+final Vertex vertex3 = new Vertex(0, 0, 2 * s, 0);
+final Vertex vertex4 = new Vertex(0, 0, 0, 2 * s);
+final Vertex vertex5 = new Vertex(goldenRatio * s, goldenRatio * s, goldenRatio * s, goldenRatio * s);
+
 // Necessary processing functions
 void setup() {
-  size(800, 600);
+  size(800, 600, OPENGL);
   strokeWeight(weight);
   
   angles[0] = 0;
   angles[1] = 0;
+  
+  generateSierpinski(5, 0, vertex1, vertex2, vertex3, vertex4, vertex5);
   
   updateTransform();
 }
@@ -71,6 +85,8 @@ void draw() {
   fiveCell.render(255, 0, 0);
   */
   
+  /*
+  // Example code for constantly rendering a 4D sierpinski fractal, inducing lag
   renderSierpinski(3, 0, r, g, b,
     new Vertex(2 * s, 0, 0, 0),
     new Vertex(0, 2 * s, 0, 0),
@@ -78,6 +94,16 @@ void draw() {
     new Vertex(0, 0, 0, 2 * s),
     new Vertex(goldenRatio * s, goldenRatio * s, goldenRatio * s, goldenRatio * s)
   );
+  */
+  
+  // Render generated sierpinski fractal
+  renderGeneratedSierpinski(r, g, b);
+  
+  // Show each outer vertex
+  showVertices(5, 255, 255, 255);
+  
+  // Show each line
+  showLines(1, 255, 255, 255);
 }
 
 void mouseDragged() {
@@ -165,17 +191,34 @@ void renderTriangles(ArrayList<Triangle> tri, int r, int g, int b) {
   }
 }
 
-class Vertex { // 1D
-  double w;
+class Vertex {
   double x;
   double y;
   double z;
+  double w;
   
   Vertex(double x, double y, double z, double w) {
-    this.w = w;
     this.x = x;
     this.y = y;
     this.z = z;
+    this.w = w;
+  }
+  
+  Vertex(Vertex vertex) {
+    this.x = vertex.x;
+    this.y = vertex.y;
+    this.z = vertex.z;
+    this.w = vertex.w;
+  }
+}
+
+class LineSegment {
+  Vertex v1, v2;
+  double depth;
+
+  LineSegment(Vertex v1, Vertex v2) {
+    this.v1 = v1;
+    this.v2 = v2;
   }
 }
 
@@ -311,6 +354,7 @@ class FiveCell { // 4D
   }
 }
 
+// Rneder 4D sierpinski fractal, lots of lag with limit >= 3 or large s value
 void renderSierpinski(int limit, int count, int r, int g, int b, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5) {
   if (count >= limit) return;
   
@@ -387,6 +431,89 @@ void renderSierpinski(int limit, int count, int r, int g, int b, Vertex v1, Vert
   );
 }
 
+// Generate 4D sierpinski fractal, less lag :]
+void generateSierpinski(int limit, int count, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5) {
+  if (count >= limit) return;
+  
+  if (count == 0) {
+    // Center the shape
+    double[] center = getFiveCellCenter(v1, v2, v3, v4, v5);
+    Vertex[] vertices = new Vertex[]{v1, v2, v3, v4, v5};
+    
+    for (Vertex vertex : vertices) {
+      vertex.x -= center[0];
+      vertex.y -= center[1];
+      vertex.z -= center[2];
+      vertex.w -= center[3];
+    }
+    
+    v1 = vertices[0];
+    v2 = vertices[1];
+    v3 = vertices[2];
+    v4 = vertices[3];
+    v5 = vertices[4];
+  }
+  
+  // Create a 5-cell
+  FiveCell fiveCell = new FiveCell();
+  
+  fiveCell.addShape(new Tetrahedron(new Vertex[]{v1, v2, v3, v4}));
+  fiveCell.addShape(new Tetrahedron(new Vertex[]{v1, v2, v3, v5}));
+  fiveCell.addShape(new Tetrahedron(new Vertex[]{v1, v2, v4, v5}));
+  fiveCell.addShape(new Tetrahedron(new Vertex[]{v1, v3, v4, v5}));
+  fiveCell.addShape(new Tetrahedron(new Vertex[]{v2, v3, v4, v5}));
+  
+  // Add to an arraylist of 5-cells
+  sierpinski.add(fiveCell);
+  
+  // Recursively create more 5-cells following the sierpinski fractal
+  generateSierpinski(limit, count + 1,
+    v1,
+    new Vertex((v1.x + v2.x) / 2, (v1.y + v2.y) / 2, (v1.z + v2.z) / 2, (v1.w + v2.w) / 2),
+    new Vertex((v1.x + v3.x) / 2, (v1.y + v3.y) / 2, (v1.z + v3.z) / 2, (v1.w + v3.w) / 2),
+    new Vertex((v1.x + v4.x) / 2, (v1.y + v4.y) / 2, (v1.z + v4.z) / 2, (v1.w + v4.w) / 2),
+    new Vertex((v1.x + v5.x) / 2, (v1.y + v5.y) / 2, (v1.z + v5.z) / 2, (v1.w + v5.w) / 2) 
+  );
+  
+  generateSierpinski(limit, count + 1,
+    new Vertex((v1.x + v2.x) / 2, (v1.y + v2.y) / 2, (v1.z + v2.z) / 2, (v1.w + v2.w) / 2),
+    v2,
+    new Vertex((v2.x + v3.x) / 2, (v2.y + v3.y) / 2, (v2.z + v3.z) / 2, (v2.w + v3.w) / 2),
+    new Vertex((v2.x + v4.x) / 2, (v2.y + v4.y) / 2, (v2.z + v4.z) / 2, (v2.w + v4.w) / 2),
+    new Vertex((v2.x + v5.x) / 2, (v2.y + v5.y) / 2, (v2.z + v5.z) / 2, (v2.w + v5.w) / 2)
+  );
+  
+  generateSierpinski(limit, count + 1,
+    new Vertex((v1.x + v3.x) / 2, (v1.y + v3.y) / 2, (v1.z + v3.z) / 2, (v1.w + v3.w) / 2),
+    new Vertex((v2.x + v3.x) / 2, (v2.y + v3.y) / 2, (v2.z + v3.z) / 2, (v2.w + v3.w) / 2),
+    v3,
+    new Vertex((v3.x + v4.x) / 2, (v3.y + v4.y) / 2, (v3.z + v4.z) / 2, (v3.w + v4.w) / 2),
+    new Vertex((v3.x + v5.x) / 2, (v3.y + v5.y) / 2, (v3.z + v5.z) / 2, (v3.w + v5.w) / 2)
+  );
+  
+  generateSierpinski(limit, count + 1,
+    new Vertex((v1.x + v4.x) / 2, (v1.y + v4.y) / 2, (v1.z + v4.z) / 2, (v1.w + v4.w) / 2),
+    new Vertex((v2.x + v4.x) / 2, (v2.y + v4.y) / 2, (v2.z + v4.z) / 2, (v2.w + v4.w) / 2),
+    new Vertex((v3.x + v4.x) / 2, (v3.y + v4.y) / 2, (v3.z + v4.z) / 2, (v3.w + v4.w) / 2),
+    v4,
+    new Vertex((v4.x + v5.x) / 2, (v4.y + v5.y) / 2, (v4.z + v5.z) / 2, (v4.w + v5.w) / 2)
+  );
+  
+  generateSierpinski(limit, count + 1,
+    new Vertex((v1.x + v5.x) / 2, (v1.y + v5.y) / 2, (v1.z + v5.z) / 2, (v1.w + v5.w) / 2),
+    new Vertex((v2.x + v5.x) / 2, (v2.y + v5.y) / 2, (v2.z + v5.z) / 2, (v2.w + v5.w) / 2),
+    new Vertex((v3.x + v5.x) / 2, (v3.y + v5.y) / 2, (v3.z + v5.z) / 2, (v3.w + v5.w) / 2),
+    new Vertex((v4.x + v5.x) / 2, (v4.y + v5.y) / 2, (v4.z + v5.z) / 2, (v4.w + v5.w) / 2),
+    v5
+  );
+}
+
+void renderGeneratedSierpinski(int r, int g, int b) {
+  for (FiveCell shape : sierpinski) {
+    shape.render(r, g, b);
+  }
+}
+
 double[] getFiveCellCenter(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5) {
   return new double[]{
     (v1.x + v2.x + v3.x + v4.x + v5.x) / 5,
@@ -394,6 +521,143 @@ double[] getFiveCellCenter(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5
     (v1.z + v2.z + v3.z + v4.z + v5.z) / 5,
     (v1.w + v2.w + v3.w + v4.w + v5.w) / 5
   };
+}
+
+void showVertices(float size, int r, int g, int b) {
+  Vertex v1 = new Vertex(transform.transform(vertex1));
+  Vertex v2 = new Vertex(transform.transform(vertex2));
+  Vertex v3 = new Vertex(transform.transform(vertex3));
+  Vertex v4 = new Vertex(transform.transform(vertex4));
+  Vertex v5 = new Vertex(transform.transform(vertex5));
+  
+  pushMatrix();
+  translate((float) v1.x, (float) v1.y);
+  stroke(r, g, b);
+  sphere(size);
+  popMatrix();
+  
+  pushMatrix();
+  translate((float) v2.x, (float) v2.y);
+  stroke(r, g, b);
+  sphere(size);
+  popMatrix();
+  
+  pushMatrix();
+  translate((float) v3.x, (float) v3.y);
+  stroke(r, g, b);
+  sphere(size);
+  popMatrix();
+  
+  pushMatrix();
+  translate((float) v4.x, (float) v4.y);
+  stroke(r, g, b);
+  sphere(size);
+  popMatrix();
+  
+  pushMatrix();
+  translate((float) v5.x, (float) v5.y);
+  stroke(r, g, b);
+  sphere(size);
+  popMatrix();
+}
+
+void showLines(float w, int r, int g, int b) {
+  Vertex v1 = new Vertex(transform.transform(vertex1));
+  Vertex v2 = new Vertex(transform.transform(vertex2));
+  Vertex v3 = new Vertex(transform.transform(vertex3));
+  Vertex v4 = new Vertex(transform.transform(vertex4));
+  Vertex v5 = new Vertex(transform.transform(vertex5));
+  
+  pushMatrix();
+  strokeWeight(w);
+  stroke(r, g, b);
+  
+  // Connect v1 with all other vertices
+  line((float) v1.x, (float) v1.y, (float) v2.x, (float) v2.y);
+  line((float) v1.x, (float) v1.y, (float) v3.x, (float) v3.y);
+  line((float) v1.x, (float) v1.y, (float) v4.x, (float) v4.y);
+  line((float) v1.x, (float) v1.y, (float) v5.x, (float) v5.y);
+  
+  // Connect v2 with all other vertices
+  line((float) v2.x, (float) v2.y, (float) v3.x, (float) v3.y);
+  line((float) v2.x, (float) v2.y, (float) v4.x, (float) v4.y);
+  line((float) v2.x, (float) v2.y, (float) v5.x, (float) v5.y);
+  
+  // Connect v3 with all remaining vertices
+  line((float) v3.x, (float) v3.y, (float) v4.x, (float) v4.y);
+  line((float) v3.x, (float) v3.y, (float) v5.x, (float) v5.y);
+  
+  // Connect v4 with remaining vertex
+  line((float) v4.x, (float) v4.y, (float) v5.x, (float) v5.y);
+  
+  strokeWeight(weight);
+  popMatrix();
+}
+
+// An attempt at only rendering the "front" lines, not really complete / working
+void drawLineSegment(LineSegment segment, float w, int r, int g, int b) {
+  pushMatrix();
+  strokeWeight(w);
+  stroke(r, g, b);
+  line((float) segment.v1.x, (float) segment.v1.y, (float) segment.v2.x, (float) segment.v2.y);
+  popMatrix();
+  strokeWeight(weight);
+}
+
+double calculateDepth(LineSegment segment) {
+  double avgZ = (segment.v1.z + segment.v2.z) / 2.0;
+  // double avgW = (segment.v1.w + segment.v2.w) / 2.0;
+  // double depth = (avgZ + avgW) / 2.0;
+
+  return avgZ;
+}
+
+void showFrontLines(float weight, int r, int g, int b) {
+  Vertex v1 = new Vertex(transform.transform(vertex1));
+  Vertex v2 = new Vertex(transform.transform(vertex2));
+  Vertex v3 = new Vertex(transform.transform(vertex3));
+  Vertex v4 = new Vertex(transform.transform(vertex4));
+  Vertex v5 = new Vertex(transform.transform(vertex5));
+  
+  ArrayList<LineSegment> frontLines = new ArrayList<>();
+  frontLines.add(new LineSegment(v1, v2));
+  frontLines.add(new LineSegment(v1, v3));
+  frontLines.add(new LineSegment(v1, v4));
+  frontLines.add(new LineSegment(v1, v5));
+  frontLines.add(new LineSegment(v2, v3));
+  frontLines.add(new LineSegment(v2, v4));
+  frontLines.add(new LineSegment(v2, v5));
+  frontLines.add(new LineSegment(v3, v4));
+  frontLines.add(new LineSegment(v3, v5));
+  frontLines.add(new LineSegment(v4, v5));
+
+  // Sort by depth
+  Collections.sort(frontLines, (line1, line2) -> Double.compare(calculateDepth(line1), calculateDepth(line2)));
+
+  // Determine depth threshold
+  double depthThreshold = determineFrontThreshold(frontLines);
+
+  // Render front lines
+  for (LineSegment segment : frontLines) {
+    if (calculateDepth(segment) < depthThreshold) {
+      drawLineSegment(segment, weight, r, g, b);
+    }
+  }
+}
+
+double determineFrontThreshold(ArrayList<LineSegment> segments) {
+  ArrayList<Double> depths = new ArrayList<>();
+  for (LineSegment segment : segments) {
+    depths.add(calculateDepth(segment));
+  }
+  
+  Collections.sort(depths);
+  int middle = depths.size() / 2;
+  if (depths.size() % 2 == 1) {
+    return depths.get(middle);
+  } else {
+    return (depths.get(middle-1) + depths.get(middle)) / 2.0;
+  }
 }
 
 // Incomplete code

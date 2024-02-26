@@ -19,7 +19,7 @@ float weight = 0.75;
 double s = 150;
 
 ArrayList<FiveCell> sierpinski = new ArrayList<>();
-ArrayList<LineSegment> lineSegments = new ArrayList<LineSegment>();
+// ArrayList<LineSegment> lineSegments = new ArrayList<LineSegment>();
 
 // Constants
 final double goldenRatio = 1.61803398875;

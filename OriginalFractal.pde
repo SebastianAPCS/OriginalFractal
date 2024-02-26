@@ -3,7 +3,7 @@
 *  4D Sierpinski Fractal
 */
 
-// import processing.opengl.*;
+import processing.opengl.*;
 // import java.util.Collections;
 
 // Necessary global instances and variables
@@ -19,6 +19,7 @@ float weight = 0.75;
 double s = 150;
 
 ArrayList<FiveCell> sierpinski = new ArrayList<>();
+// ArrayList<LineSegment> lineSegments = new ArrayList<LineSegment>();
 
 // Constants
 final double goldenRatio = 1.61803398875;
@@ -31,7 +32,7 @@ final Vertex vertex5 = new Vertex(goldenRatio * s, goldenRatio * s, goldenRatio 
 
 // Necessary processing functions
 void setup() {
-  size(800, 600);
+  size(800, 600, OPENGL);
   strokeWeight(weight);
   
   angles[0] = 0;
@@ -362,7 +363,7 @@ class FiveCell { // 4D
   }
 }
 
-// Rneder 4D sierpinski fractal, lots of lag with limit >= 3 or large s value
+// Rneder 4D sierpinski fractal, lots of lag with limit 3+ or large s value
 void renderSierpinski(int limit, int count, int r, int g, int b, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5) {
   if (count >= limit) return;
   
@@ -673,7 +674,7 @@ double determineFrontThreshold(ArrayList<LineSegment> segments) {
 // Incomplete code
 /*
 boolean arePointsCoHyperplanar(double[] A, double[] B, double[] C, double[] D) {
-  // Very hard :>
+  // Very hard 
   return false;
 }
 

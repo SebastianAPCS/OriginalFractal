@@ -87,6 +87,15 @@ void draw() {
   
   /*
   // Example code for constantly rendering a 4D sierpinski fractal, inducing lag
+  
+  if (keyPressed) {
+    if (key == 'w') {
+      s += 1; 
+    } else if (key == 's') {
+      s -= 1; 
+    }
+  }
+  
   renderSierpinski(3, 0, r, g, b,
     new Vertex(2 * s, 0, 0, 0),
     new Vertex(0, 2 * s, 0, 0),
